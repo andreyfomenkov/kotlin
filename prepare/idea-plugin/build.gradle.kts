@@ -62,6 +62,8 @@ dependencies {
     sideJars(commonDep("javax.inject"))
     sideJars(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
     sideJars(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8")) { isTransitive = false }
+    sideJars(commonDep("org.jetbrains.uast", "uast-common")) { isTransitive = false }
+    sideJars(commonDep("org.jetbrains.uast", "uast-java")) { isTransitive = false }
     sideJars("teamcity:markdown")
 }
 
