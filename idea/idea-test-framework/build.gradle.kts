@@ -12,12 +12,10 @@ dependencies {
     compile(project(":kotlin-test:kotlin-test-jvm"))
     compileOnly(project(":kotlin-reflect-api"))
     compile(commonDep("junit:junit"))
-    compileOnly(intellijDep()) { includeJars("openapi", "idea", "log4j") }
+    compileOnly(intellijDep()) { includeJars("openapi", "platform-api", "platform-impl", "java-api", "java-impl", "idea", "log4j") }
 }
 
 sourceSets {
     "main" { projectDefault() }
     "test" {}
 }
-
-

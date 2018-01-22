@@ -6,7 +6,7 @@ apply { plugin("kotlin") }
 dependencies {
     testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     testRuntime(intellijDep())
-    testCompileOnly(intellijDep()) { includeJars("idea", "idea_rt", "openapi") }
+    testCompileOnly(intellijDep()) { includeJars("idea", "idea_rt", "openapi", "platform-api", "platform-impl") }
 
     compile(project(":compiler:util"))
     compile(project(":compiler:cli"))

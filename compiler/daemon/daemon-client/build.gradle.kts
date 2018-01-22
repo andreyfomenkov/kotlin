@@ -16,6 +16,8 @@ dependencies {
     compileOnly(project(":compiler:daemon-common"))
     compileOnly(project(":kotlin-reflect-api"))
     compileOnly(commonDep("net.rubygrapefruit", "native-platform"))
+    compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
+
     fatJarContents(project(":compiler:daemon-common")) { isTransitive = false }
     fatJarContents(commonDep("net.rubygrapefruit", "native-platform"))
     nativePlatformVariants.forEach {
