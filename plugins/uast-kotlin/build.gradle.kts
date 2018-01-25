@@ -9,8 +9,8 @@ dependencies {
     compile(project(":compiler:frontend.java"))
     compile(project(":compiler:light-classes"))
     compileOnly(intellijDep()) { includeJars("openapi", "idea", "util", "extensions", "asm-all") }
-    compileOnly(commonDep("org.jetbrains.uast", "uast-common"))
-    compileOnly(commonDep("org.jetbrains.uast", "uast-java"))
+//    compileOnly(commonDep("org.jetbrains.uast", "uast-common"))
+//    compileOnly(commonDep("org.jetbrains.uast", "uast-java"))
 
     testCompile(projectDist(":kotlin-test:kotlin-test-jvm"))
     testCompile(projectTests(":compiler:tests-common"))
