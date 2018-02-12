@@ -60,6 +60,8 @@ class ScriptDependenciesUpdater(
             (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
         ).asCoroutineDispatcher()
 
+    private val modifiedScripts = mutableListOf<VirtualFile>()
+
     init {
         listenToVfsChanges()
     }
@@ -84,9 +86,17 @@ class ScriptDependenciesUpdater(
             tryUsingDefault(file)
         }
 
-        performUpdate(file)
+        performUpdate(file, loaded)
 
         return cache[file] ?: ScriptDependencies.Empty
+    }
+
+    fun reloadModifiedScripts() {
+        modifiedScripts.forEach {
+            performUpdate(it, false)
+        }
+        modifiedScripts.clear()
+        notifyRootsChanged()
     }
 
     private fun tryUsingDefault(file: VirtualFile) {
@@ -109,26 +119,22 @@ class ScriptDependenciesUpdater(
         }
     }
 
-    private fun requestUpdate(files: Iterable<VirtualFile>) =
-        files.map { file ->
+    private fun requestUpdate(files: Iterable<VirtualFile>) {
+        files.forEach { file ->
             if (!file.isValid) {
-                return cache.delete(file)
+                cache.delete(file)
             } else if (cache[file] != null) { // only update dependencies for scripts that were touched recently
-                performUpdate(file)
-            } else {
-                false
+                modifiedScripts.add(file)
             }
-        }.contains(true)
+        }
+    }
 
-    private fun performUpdate(file: VirtualFile): Boolean {
-        val scriptDef = scriptDefinitionProvider.findScriptDefinition(file) ?: return false
-
-        return when (scriptDef.dependencyResolver) {
-            is AsyncDependenciesResolver, is LegacyResolverWrapper -> {
-                updateAsync(file, scriptDef)
-                return false
-            }
-            else -> updateSync(file, scriptDef)
+    private fun performUpdate(file: VirtualFile, loaded: Boolean) {
+        val scriptDef = scriptDefinitionProvider.findScriptDefinition(file) ?: return
+        if (loaded) {
+            updateAsync(file, scriptDef)
+        } else {
+            updateSync(file, scriptDef)
         }
     }
 
@@ -262,16 +268,14 @@ class ScriptDependenciesUpdater(
                     return
                 }
 
-                if (requestUpdate(events.mapNotNull {
-                        // The check is partly taken from the BuildManager.java
-                        it.file?.takeIf {
-                            // the isUnitTestMode check fixes ScriptConfigurationHighlighting & Navigation tests, since they are not trigger proper update mechanims
-                            // TODO: find out the reason, then consider to fix tests and remove this check
-                            (application.isUnitTestMode || projectFileIndex.isInContent(it)) && !isProjectOrWorkspaceFile(it)
-                        }
-                    })) {
-                    notifyRootsChanged()
-                }
+                requestUpdate(events.mapNotNull {
+                    // The check is partly taken from the BuildManager.java
+                    it.file?.takeIf {
+                        // the isUnitTestMode check fixes ScriptConfigurationHighlighting & Navigation tests, since they are not trigger proper update mechanims
+                        // TODO: find out the reason, then consider to fix tests and remove this check
+                        (application.isUnitTestMode || scriptDefinitionProvider.isScript(it.name) && projectFileIndex.isInContent(it)) && !isProjectOrWorkspaceFile(it)
+                    }
+                })
             }
         })
     }

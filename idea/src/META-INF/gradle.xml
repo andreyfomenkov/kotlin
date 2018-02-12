@@ -28,6 +28,7 @@
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectDataService"/>
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleLibraryDataService"/>
         <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.core.script.ReloadGradleTemplatesOnSync"/>
+        <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.core.script.KtGradleProjectSyncListener"/>
 
         <localInspection
             implementationClass="org.jetbrains.kotlin.idea.inspections.gradle.DifferentKotlinGradleVersionInspection"
