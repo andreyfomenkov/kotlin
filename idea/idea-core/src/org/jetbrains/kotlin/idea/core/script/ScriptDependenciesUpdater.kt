@@ -18,7 +18,17 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isProjectOrWorkspaceFile
 import com.intellij.openapi.roots.ProjectRootManager
@@ -29,6 +39,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT
+import com.intellij.util.ui.update.Update
+import gnu.trove.THashSet
 import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.asCoroutineDispatcher
@@ -41,6 +56,7 @@ import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.script.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.script.experimental.dependencies.AsyncDependenciesResolver
@@ -61,6 +77,9 @@ class ScriptDependenciesUpdater(
         ).asCoroutineDispatcher()
 
     private val modifiedScripts = mutableSetOf<VirtualFile>()
+
+    private val changedDocuments = THashSet<Document>()
+    private val changedDocumentsQueue = MergingUpdateQueue("ScriptDependenciesUpdater: Scripts queue", 1000, false, ANY_COMPONENT, project)
 
     init {
         listenToVfsChanges()
@@ -265,16 +284,72 @@ class ScriptDependenciesUpdater(
                     return
                 }
 
-                requestUpdate(events.mapNotNull {
+                val modifiedScripts = events.mapNotNull {
                     // The check is partly taken from the BuildManager.java
                     it.file?.takeIf {
                         // the isUnitTestMode check fixes ScriptConfigurationHighlighting & Navigation tests, since they are not trigger proper update mechanims
                         // TODO: find out the reason, then consider to fix tests and remove this check
-                        (application.isUnitTestMode || scriptDefinitionProvider.isScript(it.name) && projectFileIndex.isInContent(it)) && !isProjectOrWorkspaceFile(it)
+                        (application.isUnitTestMode ||
+                                scriptDefinitionProvider.isScript(it.name) && projectFileIndex.isInContent(it)) && !isProjectOrWorkspaceFile(it)
+                    }
+                }
+                requestUpdate(modifiedScripts)
+
+                // Workaround for IDEA-182367 (fixed in IDEA 181.3666)
+                if (modifiedScripts.isNotEmpty()) {
+                    if (modifiedScripts.any {
+                            GradleAutoImportAware().getAffectedExternalProjectPath(it.path, project) != null
+                        }) {
+                        return
+                    }
+                    ExternalProjectsManager.getInstance(project).externalProjectsWatcher.markDirty(project.basePath)
+                }
+            }
+        })
+
+        // partially copied from ExternalSystemProjectsWatcherImpl before fix will be implemented in IDEA:
+        // "Gradle projects need to be imported" notification should be shown when kotlin script is modified
+        val busConnection = project.messageBus.connect(changedDocumentsQueue)
+        changedDocumentsQueue.activate()
+
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(object: DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+                if (project.isDisposed) return
+                val doc = event.document
+                val virtualFile = FileDocumentManager.getInstance().getFile(doc) ?: return
+
+                if (!scriptDefinitionProvider.isScript(virtualFile.name) ||
+                    !ProjectRootManager.getInstance(project).fileIndex.isInContent(virtualFile)) {
+                    return
+                }
+
+                synchronized(changedDocuments) {
+                    changedDocuments.add(doc)
+                }
+
+                changedDocumentsQueue.queue(object : Update(this) {
+                    override fun run() {
+                        var copy: Array<Document> = emptyArray()
+
+                        synchronized(changedDocuments) {
+                            copy = changedDocuments.toTypedArray()
+                            changedDocuments.clear()
+                        }
+
+                        ExternalSystemUtil.invokeLater(project) {
+                            object : WriteAction<Any>() {
+                                override fun run(result: Result<Any>) {
+                                    for (each in copy) {
+                                        PsiDocumentManager.getInstance(project).commitDocument(each)
+                                        (FileDocumentManager.getInstance() as? FileDocumentManagerImpl)?.saveDocument(each, false)
+                                    }
+                                }
+                            }.execute()
+                        }
                     }
                 })
             }
-        })
+        }, busConnection)
     }
 
     fun clear() {
