@@ -1,6 +1,5 @@
 
 apply { plugin("kotlin") }
-apply { plugin("jps-compatible") }
 
 dependencies {
     testCompile(project(":core:descriptors"))
