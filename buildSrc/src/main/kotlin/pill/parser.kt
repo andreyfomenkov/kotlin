@@ -89,16 +89,21 @@ fun parse(project: Project, context: ParserContext): PProject = with (context) {
     return PProject("Kotlin", project.rootProject.projectDir, modules, emptyList())
 }
 
+/*
+    Ordering here and below is significant.
+    Placing 'runtime' configuration dependencies on the top make 'idea' tests to run normally.
+    ('idea' module has 'intellij-core' as transitive dependency, and we really need to get rid of it.)
+ */
 private val CONFIGURATION_MAPPING = mapOf(
+    listOf("runtime") to Scope.RUNTIME,
     listOf("compile") to Scope.COMPILE,
-    listOf("compileOnly") to Scope.PROVIDED,
-    listOf("runtime") to Scope.RUNTIME
+    listOf("compileOnly") to Scope.PROVIDED
 )
 
 private val TEST_CONFIGURATION_MAPPING = mapOf(
+    listOf("runtime", "testRuntime") to Scope.RUNTIME,
     listOf("compile", "testCompile") to Scope.COMPILE,
-    listOf("compileOnly", "testCompileOnly") to Scope.PROVIDED,
-    listOf("runtime", "testRuntime") to Scope.RUNTIME
+    listOf("compileOnly", "testCompileOnly") to Scope.PROVIDED
 )
 
 private val SOURCE_SET_MAPPING = mapOf(
@@ -230,8 +235,7 @@ private fun ParserContext.parseDependencies(project: Project, forTests: Boolean)
     val configurationMapping = if (forTests) TEST_CONFIGURATION_MAPPING else CONFIGURATION_MAPPING
 
     with(project.configurations) {
-        val moduleRoots = mutableListOf<POrderRoot>()
-        val libraryRoots = mutableListOf<POrderRoot>()
+        val mainRoots = mutableListOf<POrderRoot>()
         val deferredRoots = mutableListOf<POrderRoot>()
 
         fun collectConfigurations(): List<Pair<ResolvedConfiguration, Scope>> {
@@ -258,9 +262,9 @@ private fun ParserContext.parseDependencies(project: Project, forTests: Boolean)
                     if (mappedDependency != null) {
                         val orderRoot = POrderRoot(mappedDependency.main, scope)
                         if (mappedDependency.main is PDependency.Module) {
-                            moduleRoots += orderRoot
+                            mainRoots += orderRoot
                         } else {
-                            libraryRoots += orderRoot
+                            mainRoots += orderRoot
                         }
 
                         for (deferredDep in mappedDependency.deferred) {
@@ -273,9 +277,9 @@ private fun ParserContext.parseDependencies(project: Project, forTests: Boolean)
             }
 
             if (dependency.configuration == "runtimeElements") {
-                moduleRoots += POrderRoot(PDependency.Module(dependency.moduleName + ".src"), scope)
+                mainRoots += POrderRoot(PDependency.Module(dependency.moduleName + ".src"), scope)
             } else if (dependency.configuration == "tests-jar") {
-                moduleRoots += POrderRoot(
+                mainRoots += POrderRoot(
                     PDependency.Module(dependency.moduleName + ".test"),
                     scope,
                     isProductionOnTestDependency = true
@@ -283,11 +287,11 @@ private fun ParserContext.parseDependencies(project: Project, forTests: Boolean)
             } else {
                 val classes = dependency.moduleArtifacts.map { it.file }
                 val library = PLibrary(dependency.moduleName, classes)
-                libraryRoots += POrderRoot(PDependency.ModuleLibrary(library), scope)
+                mainRoots += POrderRoot(PDependency.ModuleLibrary(library), scope)
             }
         }
 
-        return removeDuplicates(moduleRoots + libraryRoots + deferredRoots)
+        return removeDuplicates(mainRoots + deferredRoots)
     }
 }
 
