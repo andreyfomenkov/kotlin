@@ -60,7 +60,7 @@ class ScriptDependenciesUpdater(
             (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
         ).asCoroutineDispatcher()
 
-    private val modifiedScripts = mutableListOf<VirtualFile>()
+    private val modifiedScripts = mutableSetOf<VirtualFile>()
 
     init {
         listenToVfsChanges()
@@ -82,21 +82,16 @@ class ScriptDependenciesUpdater(
 
         val loaded = tryLoadingFromDisk(file)
 
-        if (!loaded) {
-            tryUsingDefault(file)
-        }
-
-        performUpdate(file, loaded)
+        performUpdate(file, async = loaded)
 
         return cache[file] ?: ScriptDependencies.Empty
     }
 
     fun reloadModifiedScripts() {
         modifiedScripts.forEach {
-            performUpdate(it, false)
+            performUpdate(it, async = false)
         }
         modifiedScripts.clear()
-        notifyRootsChanged()
     }
 
     private fun tryUsingDefault(file: VirtualFile) {
@@ -129,12 +124,14 @@ class ScriptDependenciesUpdater(
         }
     }
 
-    private fun performUpdate(file: VirtualFile, loaded: Boolean) {
+    private fun performUpdate(file: VirtualFile, async: Boolean) {
         val scriptDef = scriptDefinitionProvider.findScriptDefinition(file) ?: return
-        if (loaded) {
+        if (async) {
             updateAsync(file, scriptDef)
         } else {
-            updateSync(file, scriptDef)
+            if (updateSync(file, scriptDef)) {
+                notifyRootsChanged()
+            }
         }
     }
 
