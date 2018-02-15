@@ -54,10 +54,11 @@ class BridgeDependenciesResolver(
                 }
             } ?: scriptCompilerConfiguration
 
-            val newClasspath = refinedConfiguration[ScriptCompileConfigurationParams.dependencies].flatMap { (it as JvmDependency).classpath }
+            val newClasspath = refinedConfiguration.getOptional(ScriptCompileConfigurationParams.dependencies)
+                ?.flatMap { (it as JvmDependency).classpath } ?: emptyList()
             if (refinedConfiguration != scriptCompilerConfiguration) {
-                val oldClasspath =
-                    scriptCompilerConfiguration[ScriptCompileConfigurationParams.dependencies].flatMap { (it as JvmDependency).classpath }
+                val oldClasspath = scriptCompilerConfiguration.getOptional(ScriptCompileConfigurationParams.dependencies)
+                    ?.flatMap { (it as JvmDependency).classpath } ?: emptyList()
                 if (newClasspath != oldClasspath) {
                     onClasspathUpdated(newClasspath)
                 }
