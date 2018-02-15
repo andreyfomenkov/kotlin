@@ -5,8 +5,10 @@ import org.gradle.api.publish.ivy.internal.artifact.DefaultIvyArtifact
 import org.gradle.api.publish.ivy.internal.publication.DefaultIvyConfiguration
 import org.gradle.api.publish.ivy.internal.publication.DefaultIvyPublicationIdentity
 import org.gradle.api.publish.ivy.internal.publisher.IvyDescriptorFileGenerator
+import org.gradle.internal.impldep.org.apache.ivy.plugins.resolver.URLResolver
 import java.io.File
 import org.gradle.internal.os.OperatingSystem
+import java.net.URL
 
 val intellijUltimateEnabled: Boolean by rootProject.extra
 val intellijRepo: String by rootProject.extra
@@ -136,6 +138,22 @@ val copyIntellijSdkSources by tasks.creating {
     configureExtractFromConfigurationTask(sources) { it.singleFile }
 }
 
+val downloadAsmAllSources by tasks.creating {
+    doFirst {
+        val targetFile = File(customDepsRepoModulesDir, "sources/asm-all-$intellijVersion-sources.jar")
+
+        val platformBaseVersion = intellijVersion.substringBefore('.', "").takeIf { it.isNotEmpty() }
+                ?: error("Invalid IDEA version $intellijVersion")
+        val sourceUrl = "https://raw.github.com/JetBrains/intellij-community/$platformBaseVersion/lib/src/asm-src.zip"
+
+        if (!targetFile.exists()) {
+            URL(sourceUrl).openConnection().getInputStream().use { urlStream ->
+                urlStream.copyTo(targetFile.outputStream())
+            }
+        }
+    }
+}
+
 val copyJpsBuildTest by tasks.creating { configureExtractFromConfigurationTask(`jps-build-test`) { it.singleFile } }
 
 val unzipNodeJSPlugin by tasks.creating { configureExtractFromConfigurationTask(`plugins-NodeJS`) { zipTree(it.singleFile) } }
@@ -159,7 +177,7 @@ fun writeIvyXml(moduleName: String, fileName: String, jarFiles: FileCollection, 
 }
 
 val prepareIvyXmls by tasks.creating {
-    dependsOn(unzipIntellijCore, unzipJpsStandalone, copyIntellijSdkSources, copyJpsBuildTest)
+    dependsOn(unzipIntellijCore, unzipJpsStandalone, copyIntellijSdkSources, downloadAsmAllSources, copyJpsBuildTest)
 
     val intellijSdkDir = File(repoDir, intellij.name)
     val intellijUltimateSdkDir = File(repoDir, intellijUltimate.name)
