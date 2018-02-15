@@ -33,7 +33,11 @@ object KotlinHighlightingUtil {
         }
 
         if (ktFile.isScript()) {
-            return !ScriptDefinitionsManager.getInstance(psiElement.project).isFailedToLoadDefinitions
+            return if (ScriptDefinitionsManager.getInstance(psiElement.project).isFailedToLoadDefinitions) {
+                ProjectRootsUtil.isInProjectSource(ktFile)
+            } else {
+                true
+            }
         }
 
         return ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
@@ -49,7 +53,9 @@ object KotlinHighlightingUtil {
         }
 
         if (ktFile.isScript()) {
-            return !ScriptDefinitionsManager.getInstance(psiElement.project).isFailedToLoadDefinitions
+            if (!ScriptDefinitionsManager.getInstance(psiElement.project).isFailedToLoadDefinitions) {
+                return true
+            }
         }
 
         return ProjectRootsUtil.isInProjectSource(ktFile)

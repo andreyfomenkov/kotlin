@@ -85,6 +85,8 @@ class GradleScriptDefinitionsContributor(private val project: Project): ScriptDe
         val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core).*\\.jar\$")
         val kotlinDslAdditionalResolverCp = ::kotlinStdlibAndCompiler
 
+        failedToLoad.set(false)
+
         // KotlinBuildScript should be last because it has wide scriptFilePattern
         val kotlinDslTemplates = loadGradleTemplates(
             templateClass = "org.gradle.kotlin.dsl.KotlinInitScript",
@@ -104,12 +106,18 @@ class GradleScriptDefinitionsContributor(private val project: Project): ScriptDe
         if (kotlinDslTemplates.isNotEmpty()) {
             return kotlinDslTemplates
         }
-        val gradleScriptKotlinLegacyTemplates = loadGradleTemplates(
-                templateClass = "org.gradle.script.lang.kotlin.KotlinBuildScript",
-                dependencySelector = Regex("^gradle-(?:script-kotlin|core).*\\.jar\$"),
-                additionalResolverClasspath = { emptyList() }
+
+        return tryToLoadOldBuildScriptDefinition()
+    }
+
+    private fun tryToLoadOldBuildScriptDefinition(): List<KotlinScriptDefinition> {
+        failedToLoad.set(false)
+
+        return loadGradleTemplates(
+            templateClass = "org.gradle.script.lang.kotlin.KotlinBuildScript",
+            dependencySelector = Regex("^gradle-(?:script-kotlin|core).*\\.jar\$"),
+            additionalResolverClasspath = { emptyList() }
         )
-        return gradleScriptKotlinLegacyTemplates
     }
 
     // TODO: check this against kotlin-dsl branch that uses daemon
