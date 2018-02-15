@@ -96,7 +96,11 @@ class JpsCompatibleRootPlugin : Plugin<Project> {
         }
 
         project.tasks.create("pill") {
-            this.doLast { pill(project) }
+            doLast { pill(project) }
+        }
+
+        project.tasks.create("unpill") {
+            doLast { unpill(project) }
         }
     }
 
@@ -104,22 +108,22 @@ class JpsCompatibleRootPlugin : Plugin<Project> {
     private lateinit var platformVersion: String
     private lateinit var platformDir: File
 
-    private fun pill(project: Project) {
+    private fun initEnvironment(project: Project) {
         projectDir = project.projectDir
         platformVersion = project.extensions.extraProperties.get("versions.intellijSdk").toString()
         platformDir = File(projectDir, "buildSrc/prepare-deps/intellij-sdk/build/repo/kotlin.build.custom.deps/$platformVersion")
+    }
+
+    private fun pill(project: Project) {
+        initEnvironment(project)
 
         val jpsProject = parse(project, ParserContext(dependencyMappers))
             .mapLibraries(this::attachPlatformSources, this::attachAsmSources)
 
         val files = render(jpsProject, getProjectLibraries(jpsProject))
 
-        File(projectDir, ".idea/libraries").deleteRecursively()
-
-        File(projectDir, ".idea/runConfigurations")
-            .walk()
-            .filter { it.name.startsWith("JPS_") && it.extension.toLowerCase() == "xml" }
-            .forEach { it.delete() }
+        removeExistingIdeaLibraries()
+        removeJpsRunConfigurations()
 
         copyRunConfigurations()
         setOptionsForDefaultJunitRunConfiguration()
@@ -129,6 +133,27 @@ class JpsCompatibleRootPlugin : Plugin<Project> {
             stubFile.parentFile.mkdirs()
             stubFile.writeText(file.text)
         }
+    }
+
+    private fun unpill(project: Project) {
+        initEnvironment(project)
+
+        val jpsProject = parse(project, ParserContext(dependencyMappers))
+        jpsProject.modules.map { it.moduleFile.delete() }
+
+        removeExistingIdeaLibraries()
+        removeJpsRunConfigurations()
+    }
+
+    private fun removeExistingIdeaLibraries() {
+        File(projectDir, ".idea/libraries").deleteRecursively()
+    }
+
+    private fun removeJpsRunConfigurations() {
+        File(projectDir, ".idea/runConfigurations")
+            .walk()
+            .filter { it.name.startsWith("JPS_") && it.extension.toLowerCase() == "xml" }
+            .forEach { it.delete() }
     }
 
     private fun copyRunConfigurations() {
