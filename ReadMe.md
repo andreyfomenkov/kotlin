@@ -15,3 +15,4 @@ When you are ready to use patched compiler in a project, run this command to bui
 
         ./gradlew install
         
+### Gradle Setup
