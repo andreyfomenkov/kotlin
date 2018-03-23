@@ -35,3 +35,4 @@ build/
 .idea/compiler.xml
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/.name
+compiler/.idea
