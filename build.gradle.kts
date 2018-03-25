@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 
 buildscript {
-    extra["defaultSnapshotVersion"] = "1.2-SNAPSHOT"
+    extra["defaultSnapshotVersion"] = "1.2-fork-1.0"
 
     kotlinBootstrapFrom(BootstrapOption.TeamCity("1.2.40-dev-165", onlySuccessBootstrap = false))
 
