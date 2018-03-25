@@ -32,4 +32,4 @@ Dependency:
            implementation "org.jetbrains.kotlin:kotlin-stdlib:1.2-fork-1.0",
         }
         
-To specify or check the latest version, see [build.gradle.kts](https://github.com/andreyfomenkov/kotlin/blob/master/build.gradle.kts) buildscript, property `extra["defaultSnapshotVersion"]`.
+To specify or check the latest version, see property `extra["defaultSnapshotVersion"]` in [build.gradle.kts](https://github.com/andreyfomenkov/kotlin/blob/master/build.gradle.kts) buildscript.
