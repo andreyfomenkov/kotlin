@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.codegen;
 
 import kotlin.collections.CollectionsKt;
+import lombok.Generated;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.codegen.annotation.WrappedAnnotated;
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.*;
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor;
+import org.jetbrains.kotlin.descriptors.impl.PropertyAccessorDescriptorImpl;
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
@@ -152,10 +154,16 @@ public abstract class AnnotationCodegen {
             @NotNull Set<String> annotationDescriptorsAlreadyPresent
     ) {
         Annotated unwrapped = annotated;
+
+        if (annotated instanceof PropertyAccessorDescriptorImpl) {
+            PropertyAccessorDescriptorImpl descriptor = (PropertyAccessorDescriptorImpl) annotated;
+            if (descriptor.isGenerated()) {
+                addGeneratedAnnotation(annotationDescriptorsAlreadyPresent);
+            }
+        }
         if (annotated instanceof WrappedAnnotated) {
             unwrapped = ((WrappedAnnotated) annotated).getOriginalAnnotated();
         }
-
         if (unwrapped instanceof CallableDescriptor) {
             CallableDescriptor descriptor = (CallableDescriptor) unwrapped;
 
@@ -174,6 +182,13 @@ public abstract class AnnotationCodegen {
                 generateRetentionAnnotation(classDescriptor, annotationDescriptorsAlreadyPresent);
                 generateTargetAnnotation(classDescriptor, annotationDescriptorsAlreadyPresent);
             }
+        }
+    }
+
+    private void addGeneratedAnnotation(@NotNull Set<String> annotationDescriptorsAlreadyPresent) {
+        String descriptor = Type.getType(Generated.class).getDescriptor();
+        if (!annotationDescriptorsAlreadyPresent.contains(descriptor)) {
+            visitAnnotation(descriptor, false).visitEnd();
         }
     }
 
