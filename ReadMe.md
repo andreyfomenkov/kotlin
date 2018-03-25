@@ -16,17 +16,20 @@ When you are ready to use patched compiler in your project, run this command to 
         ./gradlew install
         
 ### Gradle Setup
-Inside build.gradle script add the reference to local Maven repository prior to `mavenCentral()` and dependency:
+Inside build.gradle script add the reference to local Maven repository prior to `mavenCentral()`:
 
         buildscript {
            repositories {
               mavenLocal()
               mavenCentral()
            }
-           dependencies {
-              kotlinPlugin : "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2-fork-1.0",
-              kotlinStdLib : "org.jetbrains.kotlin:kotlin-stdlib:1.2-fork-1.0",
-           }
+        }
+       
+Dependency:
+        
+        dependencies {
+           implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2-fork-1.0",
+           implementation "org.jetbrains.kotlin:kotlin-stdlib:1.2-fork-1.0",
         }
         
 To specify or check the latest version, see [build.gradle.kts](https://github.com/andreyfomenkov/kotlin/blob/master/build.gradle.kts) buildscript, property `extra["defaultSnapshotVersion"]`.
