@@ -16,7 +16,7 @@ When you are ready to use patched compiler in your project, run this command to 
         ./gradlew install
         
 ### Gradle Setup
-Inside build.gradle script add the reference to local Maven repository prior to `mavenCentral()`:
+In order to use local distribution, inside `build.gradle` add the reference to local Maven repository prior to `mavenCentral()`:
 
         buildscript {
            repositories {
