@@ -965,8 +965,17 @@ public class DescriptorResolver {
 
         propertyDescriptor.initialize(getter, setter);
 
+        if (modifierList != null && modifierList.hasModifier(KtTokens.LATEINIT_KEYWORD)) {
+            markPropetryAsGenerated(setter, getter);
+        }
+
         trace.record(BindingContext.VARIABLE, variableDeclaration, propertyDescriptor);
         return propertyDescriptor;
+    }
+
+    private void markPropetryAsGenerated(PropertySetterDescriptor setter, PropertyGetterDescriptor getter) {
+        ((PropertyAccessorDescriptorImpl) setter).setGenerated(true);
+        ((PropertyAccessorDescriptorImpl) getter).setGenerated(true);
     }
 
     @NotNull

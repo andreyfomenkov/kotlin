@@ -38,6 +38,7 @@ public abstract class PropertyAccessorDescriptorImpl extends DeclarationDescript
     private Visibility visibility;
     @Nullable
     private FunctionDescriptor initialSignatureDescriptor = null;
+    private boolean isGenerated;
 
     public PropertyAccessorDescriptorImpl(
             @NotNull Modality modality,
@@ -149,6 +150,14 @@ public abstract class PropertyAccessorDescriptorImpl extends DeclarationDescript
     public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
+
+    public boolean isGenerated() {
+        return isGenerated;
+    }
+
+    public void setGenerated(boolean isGenerated) {
+        this.isGenerated = isGenerated;
+    }	
 
     @NotNull
     @Override
