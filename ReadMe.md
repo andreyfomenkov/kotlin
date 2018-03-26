@@ -33,3 +33,9 @@ Dependency:
         }
         
 To specify or check the latest version, see property `extra["defaultSnapshotVersion"]` in [build.gradle.kts](https://github.com/andreyfomenkov/kotlin/blob/master/build.gradle.kts) buildscript.
+
+### Changelog
+The next code constructions are now being skipped by JaCoCo:</br>
+* **1.2-fork-1.0 / 25 Mar 2018:**</br>
+1. Data Classes: toString(), hashCode(), equals(), componentN(), copy() methods;</br>
+2. Lateinit properties.
