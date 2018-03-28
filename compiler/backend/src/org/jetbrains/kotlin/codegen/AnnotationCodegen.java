@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.codegen;
 
 import kotlin.collections.CollectionsKt;
-import lombok.Generated;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.codegen.annotation.WrappedAnnotated;
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.load.java.JvmAnnotationNames;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.resolve.AnnotationChecker;
+import org.jetbrains.kotlin.resolve.annotations.AnnotationUtil;
 import org.jetbrains.kotlin.resolve.constants.*;
 import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt;
 import org.jetbrains.kotlin.types.FlexibleType;
@@ -186,7 +186,7 @@ public abstract class AnnotationCodegen {
     }
 
     private void addGeneratedAnnotation(@NotNull Set<String> annotationDescriptorsAlreadyPresent) {
-        String descriptor = Type.getType(Generated.class).getDescriptor();
+        String descriptor = AnnotationUtil.getGenerateAnnotationDescriptor();
         if (!annotationDescriptorsAlreadyPresent.contains(descriptor)) {
             visitAnnotation(descriptor, false).visitEnd();
         }

@@ -11,7 +11,6 @@ import com.intellij.util.ArrayUtil;
 import kotlin.Unit;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function2;
-import lombok.Generated;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.backend.common.CodegenUtil;
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.platform.JavaToKotlinClassMap;
 import org.jetbrains.kotlin.platform.JavaToKotlinClassMap.PlatformMutabilityMapping;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.*;
+import org.jetbrains.kotlin.resolve.annotations.AnnotationUtil;
 import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilKt;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall;
@@ -536,7 +536,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         }
 
         private void addGeneratedAnnotation(MethodVisitor mv) {
-            String descriptor = Type.getType(Generated.class).getDescriptor();
+            String descriptor = AnnotationUtil.getGenerateAnnotationDescriptor();
             mv.visitAnnotation(descriptor, false);
         }
 

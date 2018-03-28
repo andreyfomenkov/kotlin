@@ -47,3 +47,9 @@ fun DeclarationDescriptor.findStrictfpAnnotation() =
 fun AnnotationDescriptor.argumentValue(parameterName: String): ConstantValue<*>? {
     return allValueArguments[Name.identifier(parameterName)].takeUnless { it is ErrorValue }
 }
+
+object AnnotationUtil {
+
+    @JvmStatic
+    fun getGenerateAnnotationDescriptor() = "Llombok/Generated;"
+}
