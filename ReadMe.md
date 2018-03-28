@@ -36,6 +36,9 @@ To specify or check the latest version, see property `extra["defaultSnapshotVers
 
 ### Changelog
 The next code constructions are now being skipped by JaCoCo:</br>
-* **1.2-fork-1.0 / 25 Mar 2018:**</br>
-1. Data Classes: toString(), hashCode(), equals(), componentN(), copy() methods;</br>
-2. Lateinit properties.
+**1.2-fork-1.0 / 25 Mar 2018:**</br>
+* Data Classes: toString(), hashCode(), equals(), componentN(), copy() methods;</br>
+* Lateinit properties.</br>
+**1.2-fork-1.1 / 29 Mar 2018:**</br>
+* Fix NoClassDefFoundError.</br>
+
