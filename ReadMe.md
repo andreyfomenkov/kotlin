@@ -33,7 +33,7 @@ Dependency:
         }
         
 To specify or check the latest version, see property `extra["defaultSnapshotVersion"]` in [build.gradle.kts](https://github.com/andreyfomenkov/kotlin/blob/master/build.gradle.kts) buildscript.
-
+**Warning!** For multi module projects make sure you specified the same version of Kotlin dependencies for each module.
 ### Changelog
 The next code constructions are now being skipped by JaCoCo:</br>
 #### 1.2-fork-1.0 / 25 Mar 2018:</br>
